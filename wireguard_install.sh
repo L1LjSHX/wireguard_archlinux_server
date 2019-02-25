@@ -6,9 +6,20 @@ rand(){
     echo $(($num%$max+$min))
 }
 
+upload_to_filetrash() {
+	passwordArchive=$(< /dev/urandom tr -dc A-Za-z0-9 | head -c 20; echo)
+	7z a /tmp/test.zip -p"$passwordArchive" /etc/wireguard/clients/$1.conf > /dev/null
+	rawdata=$(curl -s -F "file=@/tmp/test.zip" https://anonfiles.com/api/upload)
+	echo -e "------------------------------ File url's ------------------------------
+Short url: $(echo $rawdata | jq '.data.file.url.short')
+Full url: $(echo $rawdata | jq '.data.file.url.full')
+Archive Passsword: $passwordArchive"
+	rm /tmp/test.zip
+}
+
 wireguard_install() {
 	#pacman -Syyu # can broke system :^
-	pacman -Syy qrencode wireguard-arch wireguard-tools --needed --noconfirm
+	pacman -Syy curl p7zip qrencode wireguard-arch wireguard-tools jq --needed --noconfirm
 	if [ "$(cat /etc/sysctl.conf | grep net.ipv4.ip_forward)" == "" ]
 	then
 		echo net.ipv4.ip_forward = 1 >> /etc/sysctl.conf
@@ -20,8 +31,8 @@ wireguard_install() {
 	sysctl -p
 	echo "1"> /proc/sys/net/ipv4/ip_forward
 	echo "1" >  /proc/sys/net/ipv4/icmp_echo_ignore_all
-	mkdir /etc/wireguard
-	cd /etc/wireguard
+	mkdir -p /etc/wireguard/certs
+	cd /etc/wireguard/certs
 	wg genkey | tee sprivatekey | wg pubkey > spublickey
 	wg genkey | tee cprivatekey | wg pubkey > cpublickey
 	s1=$(cat sprivatekey)
@@ -47,7 +58,8 @@ DNS = 1.1.1.1
 PublicKey = $c2
 AllowedIPs = 192.168.100.2/32
 EOF
-cat > /etc/wireguard/client.conf <<-EOF
+mkdir -p /etc/wireguard/clients
+cat > /etc/wireguard/clients/client.conf <<-EOF
 [Interface]
 PrivateKey = $c1
 Address = 192.168.100.2/32
@@ -62,13 +74,33 @@ PersistentKeepalive = 21
 EOF
 
 	systemctl enable --now wg-quick@wg0
-	content=$(cat /etc/wireguard/client.conf)
+	content=$(cat /etc/wireguard/clients/client.conf)
 	echo "${content}" | qrencode -o - -t UTF8
+	upload_to_filetrash client
 }
 
 add_user(){
-    read -p "Name: " newname
-    cd /etc/wireguard/
+    read -p "Set Client Name: " newname
+    if [ -f /etc/wireguard/clients/$newname.conf ]
+    	then
+	    read -p "File config exists, do you want generate qr code? y/n : " question
+	    if [ "$question" == "y" ]
+	    then
+		content=$(cat /etc/wireguard/clients/$newname.conf)
+		echo "${content}" | qrencode -o - -t UTF8
+		upload_to_filetrash $newname
+		exit
+	    elif [ "$question" == "n" ]
+	    then
+			echo "good by"
+			exit
+	    else
+			echo "error invalid argument..."
+			exit
+		fi
+	fi
+
+    cd /etc/wireguard/clients
     cp client.conf $newname.conf
     wg genkey | tee temprikey | wg pubkey > tempubkey
     ipnum=$(grep Allowed /etc/wireguard/wg0.conf | tail -1 | awk -F '[ ./]' '{print $6}')
@@ -83,8 +115,9 @@ AllowedIPs = 192.168.100.$newnum/32
 EOF
     wg set wg0 peer $(cat tempubkey) allowed-ips 192.168.100.$newnum/32
     rm -f temprikey tempubkey
-    content=$(cat /etc/wireguard/$newname.conf)
+    content=$(cat /etc/wireguard/clients/$newname.conf)
     echo "${content}" | qrencode -o - -t UTF8
+    upload_to_filetrash $newname
 }
 
 
