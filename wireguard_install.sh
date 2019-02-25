@@ -6,7 +6,7 @@ rand(){
     echo $(($num%$max+$min))
 }
 
-upload_to_filetrash() {
+upload() {
 	passwordArchive=$(< /dev/urandom tr -dc A-Za-z0-9 | head -c 20; echo)
 	7z a /tmp/test.zip -p"$passwordArchive" /etc/wireguard/clients/$1.conf > /dev/null
 	rawdata=$(curl -s -F "file=@/tmp/test.zip" https://anonfiles.com/api/upload)
@@ -76,7 +76,7 @@ EOF
 	systemctl enable --now wg-quick@wg0
 	content=$(cat /etc/wireguard/clients/client.conf)
 	echo "${content}" | qrencode -o - -t UTF8
-	upload_to_filetrash client
+	upload client
 }
 
 add_user(){
@@ -88,7 +88,7 @@ add_user(){
 	    then
 		content=$(cat /etc/wireguard/clients/$newname.conf)
 		echo "${content}" | qrencode -o - -t UTF8
-		upload_to_filetrash $newname
+		upload $newname
 		exit
 	    elif [ "$question" == "n" ]
 	    then
@@ -117,7 +117,7 @@ EOF
     rm -f temprikey tempubkey
     content=$(cat /etc/wireguard/clients/$newname.conf)
     echo "${content}" | qrencode -o - -t UTF8
-    upload_to_filetrash $newname
+    upload $newname
 }
 
 
