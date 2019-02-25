@@ -10,8 +10,10 @@ wireguard_install() {
 	pacman -Syyu
 	pacman -S qrencode wireguard-arch wireguard-tools --needed --noconfirm
 	echo net.ipv4.ip_forward = 1 >> /etc/sysctl.conf
+	echo net.ipv4.icmp_echo_ignore_all = 1 >> /etc/sysctl.conf
 	sysctl -p
 	echo "1"> /proc/sys/net/ipv4/ip_forward
+	echo "1" >  /proc/sys/net/ipv4/icmp_echo_ignore_all
 	mkdir /etc/wireguard
 	cd /etc/wireguard
 	wg genkey | tee sprivatekey | wg pubkey > spublickey
@@ -84,3 +86,32 @@ wireguard_remove() {
 	pacman -Rnu wireguard-tools wireguard-arch --noconfirm
 	rm -rf /etc/wireguard
 }
+
+
+help() {
+	echo -e "----------------------- HELP MENU :3 -----------------------
+./winreguard_install.sh install - Install wireguard server
+./wireguard_install.sh remove - Remove Wireguard server
+./wireguard_install.sh add -  For add user"
+}
+
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root"
+  exit
+fi
+
+case "$1" in
+	--h | --help | help)
+		help
+		;;
+	--install | install)
+		wireguard_install
+		;;
+	--remove | remove)
+		wireguard_remove
+		;;
+	*)
+		echo "invalid Command"
+		help
+		;;
+esac
