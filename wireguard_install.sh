@@ -7,7 +7,8 @@ rand(){
 }
 
 wireguard_install() {
-	pacman -S wireguard-arch wireguard-tools --needed --noconfirm
+	pacman -Syyu
+	pacman -S qrencode wireguard-arch wireguard-tools --needed --noconfirm
 	echo net.ipv4.ip_forward = 1 >> /etc/sysctl.conf
 	sysctl -p
 	echo "1"> /proc/sys/net/ipv4/ip_forward
@@ -36,8 +37,30 @@ DNS = 1.1.1.1
 
 [Peer]
 PublicKey = $c2
-AllowedIPs = 10.0.0.2/32
+AllowedIPs = 192.168.100.2/32
 EOF
+cat > /etc/wireguard/client.conf <<-EOF
+[Interface]
+PrivateKey = $c1
+Address = 192.168.100.2/32
+DNS = 1.1.1.1
+
+
+[Peer]
+PublicKey = $s2
+Endpoint = $serverip:$port
+AllowedIPs = 0.0.0.0/0, ::0/0
+PersistentKeepalive = 21
+EOF
+
 	systemctl enable --now wg-quick@wg0
+	content=$(cat /etc/wireguard/client.conf)
+	echo "${content}" | qrencode -o - -t UTF8
 }
 
+wireguard_remove() {
+	systemctl stop wg-quick@wg0
+	systemctl disable wg-quick@wg0
+	pacman -Rnu wireguard-tools wireguard-arch --noconfirm
+	rm -rf /etc/wireguard
+}
