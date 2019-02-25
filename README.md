@@ -22,4 +22,3 @@ And add client
 ```
 ./wireguard_install.sh add
 ```
-Script to install wireguard on archlinux server
