@@ -1,6 +1,8 @@
 # Wireguard-install
 
 **Support LTS(wireguard-lts)  and not official support kernels (wireguard-dkms, for Hardened and Zen kernel's too)**
+
+
 First upgrade system & reboot
 ```
 pacman -Syu
