@@ -9,8 +9,14 @@ rand(){
 wireguard_install() {
 	#pacman -Syyu # can broke system :^
 	pacman -Syy qrencode wireguard-arch wireguard-tools --needed --noconfirm
-	echo net.ipv4.ip_forward = 1 >> /etc/sysctl.conf
-	echo net.ipv4.icmp_echo_ignore_all = 1 >> /etc/sysctl.conf
+	if [ "$(cat /etc/sysctl.conf | grep net.ipv4.ip_forward)" == "" ]
+	then
+		echo net.ipv4.ip_forward = 1 >> /etc/sysctl.conf
+	fi
+	if [ "$(cat /etc/sysctl.conf | grep net.ipv4.icmp_echo_ignore_all)" == "" ]
+	then
+		echo net.ipv4.icmp_echo_ignore_all = 1 >> /etc/sysctl.conf
+	fi
 	sysctl -p
 	echo "1"> /proc/sys/net/ipv4/ip_forward
 	echo "1" >  /proc/sys/net/ipv4/icmp_echo_ignore_all
@@ -22,7 +28,7 @@ wireguard_install() {
 	s2=$(cat spublickey)
 	c1=$(cat cprivatekey)
 	c2=$(cat cpublickey)
-	serverip=$(curl ipv4.icanhazip.com)
+	serverip=$(curl -s ipv4.icanhazip.com)
 	port=$(rand 10000 60000)
 	eth=$(ls /sys/class/net | awk '/^e/{print}' | tail -n 1) # change line if first adapter not connedted to internet
 
@@ -111,6 +117,9 @@ case "$1" in
 		;;
 	--remove | remove)
 		wireguard_remove
+		;;
+	--add | add | adduser)
+		add_user
 		;;
 	*)
 		echo "invalid Command"
