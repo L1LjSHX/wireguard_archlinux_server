@@ -1,4 +1,6 @@
 # Wireguard-install
 
-''' test'''
+'''
+test
+'''
 Script to install wireguard on archlinux server
