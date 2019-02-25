@@ -19,7 +19,7 @@ Archive Passsword: $passwordArchive"
 
 wireguard_install() {
 	#pacman -Syyu # can broke system :^
-	pacman -Syy curl p7zip qrencode wireguard-arch wireguard-tools jq --needed --noconfirm
+	pacman -Syy curl p7zip qrencode wireguard-$ver wireguard-tools jq --needed --noconfirm
 	if [ "$(cat /etc/sysctl.conf | grep net.ipv4.ip_forward)" == "" ]
 	then
 		echo net.ipv4.ip_forward = 1 >> /etc/sysctl.conf
@@ -124,7 +124,7 @@ EOF
 wireguard_remove() {
 	systemctl stop wg-quick@wg0
 	systemctl disable wg-quick@wg0
-	pacman -Rnu wireguard-tools wireguard-arch --noconfirm
+	pacman -Rnu wireguard-tools wireguard-$ver --noconfirm
 	rm -rf /etc/wireguard
 }
 
@@ -135,6 +135,16 @@ help() {
 ./wireguard_install.sh remove - Remove Wireguard server
 ./wireguard_install.sh add -  For add user"
 }
+
+if [ "$(uname -r | grep -oh ARCH)" == "ARCH" ]
+then
+	ver="arch"
+elif [ "$(uname -r | grep -oh lts)" == "lts" ]
+then
+	ver="lts"
+else
+	ver="dkms"
+fi
 
 if [ "$EUID" -ne 0 ]
   then echo "Please run as root"
