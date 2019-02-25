@@ -7,8 +7,8 @@ rand(){
 }
 
 wireguard_install() {
-	pacman -Syyu
-	pacman -S qrencode wireguard-arch wireguard-tools --needed --noconfirm
+	#pacman -Syyu # can broke system :^
+	pacman -Syy qrencode wireguard-arch wireguard-tools --needed --noconfirm
 	echo net.ipv4.ip_forward = 1 >> /etc/sysctl.conf
 	echo net.ipv4.icmp_echo_ignore_all = 1 >> /etc/sysctl.conf
 	sysctl -p
@@ -77,6 +77,8 @@ AllowedIPs = 192.168.100.$newnum/32
 EOF
     wg set wg0 peer $(cat tempubkey) allowed-ips 192.168.100.$newnum/32
     rm -f temprikey tempubkey
+    content=$(cat /etc/wireguard/$newname.conf)
+    echo "${content}" | qrencode -o - -t UTF8
 }
 
 
@@ -101,7 +103,7 @@ if [ "$EUID" -ne 0 ]
 fi
 
 case "$1" in
-	--h | --help | help)
+	-h | --help | help)
 		help
 		;;
 	--install | install)
