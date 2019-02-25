@@ -58,6 +58,26 @@ EOF
 	echo "${content}" | qrencode -o - -t UTF8
 }
 
+add_user(){
+    read -p "Name: " newname
+    cd /etc/wireguard/
+    cp client.conf $newname.conf
+    wg genkey | tee temprikey | wg pubkey > tempubkey
+    ipnum=$(grep Allowed /etc/wireguard/wg0.conf | tail -1 | awk -F '[ ./]' '{print $6}')
+    newnum=$((10#${ipnum}+1))
+    sed -i 's%^PrivateKey.*$%'"PrivateKey = $(cat temprikey)"'%' $newname.conf
+    sed -i 's%^Address.*$%'"Address = 10.0.0.$newnum\/24"'%' $newname.conf
+
+cat >> /etc/wireguard/wg0.conf <<-EOF
+[Peer]
+PublicKey = $(cat tempubkey)
+AllowedIPs = 192.168.100.$newnum/32
+EOF
+    wg set wg0 peer $(cat tempubkey) allowed-ips 192.168.100.$newnum/32
+    rm -f temprikey tempubkey
+}
+
+
 wireguard_remove() {
 	systemctl stop wg-quick@wg0
 	systemctl disable wg-quick@wg0
