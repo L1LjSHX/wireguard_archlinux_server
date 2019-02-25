@@ -24,7 +24,7 @@ wireguard_install() {
 	c2=$(cat cpublickey)
 	serverip=$(curl ipv4.icanhazip.com)
 	port=$(rand 10000 60000)
-	eth=$(ls /sys/class/net | awk '/^e/{print}')
+	eth=$(ls /sys/class/net | awk '/^e/{print}' | tail -n 1) # change line if first adapter not connedted to internet
 
 cat > /etc/wireguard/wg0.conf <<-EOF
 [Interface]
