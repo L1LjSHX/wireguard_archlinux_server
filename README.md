@@ -2,7 +2,6 @@
 
 **Support LTS(wireguard-lts)  and not official support kernels (wireguard-dkms, for Hardened and Zen kernel's too)**
 
-**DNSCrypt use as default DNS**
 
 First upgrade system & reboot
 ```

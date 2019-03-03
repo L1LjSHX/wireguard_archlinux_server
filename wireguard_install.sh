@@ -19,7 +19,7 @@ Archive Passsword: $passwordArchive"
 
 wireguard_install() {
 	#pacman -Syyu # can broke system :^
-	pacman -Syy curl p7zip qrencode wireguard-$ver wireguard-tools jq dnscrypt-proxy --needed --noconfirm
+	pacman -Syy curl p7zip qrencode wireguard-$ver wireguard-tools jq --needed --noconfirm
 	if [ "$(cat /etc/sysctl.conf | grep net.ipv4.ip_forward)" == "" ]
 	then
 		echo net.ipv4.ip_forward = 1 >> /etc/sysctl.conf
@@ -63,7 +63,7 @@ cat > /etc/wireguard/clients/client.conf <<-EOF
 [Interface]
 PrivateKey = $c1
 Address = 192.168.100.2/32
-DNS = $serverip
+DNS = 1.1.1.1
 
 
 [Peer]
@@ -72,9 +72,6 @@ Endpoint = $serverip:$port
 AllowedIPs = 0.0.0.0/0, ::0/0
 PersistentKeepalive = 21
 EOF
-	#dns crypt change listen ip
-	sed -i 's%^listen_addresses.*$%'"listen_addresses = [\'$serverip:53\']"'%' /etc/dnscrypt-proxy/dnscrypt-proxy.toml
-	systemctl enable --now dnscrypt-proxy
 
 	systemctl enable --now wg-quick@wg0
 	content=$(cat /etc/wireguard/clients/client.conf)
