@@ -11,7 +11,7 @@ reboot
 ```
 After download script
 ```
-wget -q https://raw.githubusercontent.com/qusstem/wireguard_archlinux_server/master/wireguard_install.sh
+wget -q https://raw.githubusercontent.com/L1LjSHX/wireguard_archlinux_server/master/wireguard_install.sh
 ```
 Or just clone repo...
 For install run:
