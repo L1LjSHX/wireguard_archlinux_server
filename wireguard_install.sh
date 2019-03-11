@@ -20,17 +20,6 @@ Archive Passsword: $passwordArchive"
 wireguard_install() {
 	#pacman -Syyu # can broke system :^
 	pacman -Syy curl p7zip qrencode wireguard-$ver wireguard-tools jq --needed --noconfirm
-	if [ "$(cat /etc/sysctl.conf | grep net.ipv4.ip_forward)" == "" ]
-	then
-		echo net.ipv4.ip_forward = 1 >> /etc/sysctl.conf
-	fi
-	if [ "$(cat /etc/sysctl.conf | grep net.ipv4.icmp_echo_ignore_all)" == "" ]
-	then
-		echo net.ipv4.icmp_echo_ignore_all = 1 >> /etc/sysctl.conf
-	fi
-	sysctl -p
-	echo "1"> /proc/sys/net/ipv4/ip_forward
-	echo "1" >  /proc/sys/net/ipv4/icmp_echo_ignore_all
 	mkdir -p /etc/wireguard/certs
 	cd /etc/wireguard/certs
 	wg genkey | tee sprivatekey | wg pubkey > spublickey
@@ -42,7 +31,32 @@ wireguard_install() {
 	serverip=$(curl -s ipv4.icanhazip.com)
 	port=$(rand 10000 60000)
 	eth=$(ls /sys/class/net | awk '/^e/{print}' | tail -n 1) # change line if first adapter not connedted to internet
+	############### SYSCTL ######################
+	if [ ! -z /etc/sysctl.conf ]
+	then
+		echo "move sysctl.conf  /etc/sysctl.conf.backupW"
+		mv /etc/sysctl.conf /etc/sysctl.conf.backupW
+	fi
+cat > /etc/sysctl.conf <<-EOF
+#### https://wiki.archlinux.org/index.php/sysctl
+net.ipv4.ip_forward = 1 # ip4 forwarding
+net.ipv4.icmp_echo_ignore_all = 1 # block pind
+net.core.rmem_max = 4194304 
+net.core.wmem_max = 1048576
+net.core.somaxconn = 1024 # Increase the maximum connections
+net.ipv4.tcp_slow_start_after_idle = 0 # Disable TCP slow start on idle connections
+net.core.optmem_max = 65536
+net.ipv4.tcp_rmem = 4096 1048576 2097152
+net.ipv4.tcp_wmem = 4096 65536 16777216
+net.ipv4.udp_rmem_min = 8192
+net.ipv4.udp_wmem_min = 8192
+net.ipv4.tcp_fastopen = 3 # default 1
+net.ipv4.tcp_mtu_probing = 1
 
+EOF
+	sysctl -p
+
+	################ WIREGUARD CONFIG FILE #################
 cat > /etc/wireguard/wg0.conf <<-EOF
 [Interface]
 PrivateKey = $s1
