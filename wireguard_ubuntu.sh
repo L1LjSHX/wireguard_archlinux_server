@@ -140,7 +140,7 @@ EOF
 wireguard_remove() {
 	systemctl stop wg-quick@wg0
 	systemctl disable wg-quick@wg0
-	pacman -Rnu wireguard-tools wireguard-$ver --noconfirm
+	apt remove wireguard-tools wireguard-dkms -y
 	rm -rf /etc/wireguard
 }
 
