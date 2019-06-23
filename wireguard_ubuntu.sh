@@ -34,12 +34,12 @@ wireguard_install() {
 	port=$(rand 10000 60000)
 	eth=$(ls /sys/class/net | awk '/^e/{print}' | tail -n 1) # change line if first adapter not connedted to internet
 	############### SYSCTL ######################
-	if [ ! -z /etc/sysctl.conf ]
+	if [ ! -z /etc/sysctl.d/99-sysctl.conf ]
+		echo "move 99-sysctl.conf  /etc/sysctl.d/99-sysctl.conf.backupW"
+		mv /etc/sysctl.d/99-sysctl.conf /etc/sysctl.d/99-sysctl.conf.backupW
 	then
-		echo "move sysctl.conf  /etc/sysctl.conf.backupW"
-		mv /etc/sysctl.conf /etc/sysctl.conf.backupW
 	fi
-cat > /etc/sysctl.conf <<-EOF
+cat > /etc/sysctl.d/99-sysctl.conf  <<-EOF
 #### https://wiki.archlinux.org/index.php/sysctl
 net.ipv4.ip_forward = 1 # ip4 forwarding
 net.ipv4.icmp_echo_ignore_all = 1 # block pind
